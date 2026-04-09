@@ -127,3 +127,36 @@ document.querySelectorAll('.service-card, .mvv-card').forEach(card => {
 
 console.log('%cCyberSafeLine 🛡️ — Ciberseguridad para Pymes', 
   'color:#00c8b4;font-size:14px;font-weight:bold;');
+
+// ── Remove black background from logos via canvas ──────────
+function removeBlackBg(img, threshold = 40) {
+  const canvas = document.createElement('canvas');
+  canvas.width  = img.naturalWidth  || img.width;
+  canvas.height = img.naturalHeight || img.height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const px = data.data;
+  for (let i = 0; i < px.length; i += 4) {
+    const r = px[i], g = px[i+1], b = px[i+2];
+    if (r < threshold && g < threshold && b < threshold) {
+      px[i+3] = 0;
+    } else {
+      const brightness = (r + g + b) / 3;
+      if (brightness < threshold * 2) {
+        px[i+3] = Math.round((brightness / (threshold * 2)) * 255);
+      }
+    }
+  }
+  ctx.putImageData(data, 0, 0);
+  img.src = canvas.toDataURL('image/png');
+}
+
+document.querySelectorAll('.nav-logo-img, .hero-logo, .contact-logo, .footer-logo')
+  .forEach(img => {
+    if (img.complete && img.naturalWidth) {
+      removeBlackBg(img);
+    } else {
+      img.addEventListener('load', () => removeBlackBg(img));
+    }
+  });
