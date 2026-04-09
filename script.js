@@ -1,103 +1,129 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // === Menú móvil premium ===
-    const hamburger = document.getElementById('hamburger');
-    const navMenu = document.getElementById('nav-menu');
+/* ============================================================
+   CYBERSAFELINE — script.js
+   Navbar scroll, mobile menu, scroll reveal, counters, form
+   ============================================================ */
 
-    if (hamburger && navMenu) {
-        const toggleMenu = () => {
-            const isActive = hamburger.classList.toggle('active');
-            navMenu.classList.toggle('show');
-            hamburger.setAttribute('aria-expanded', isActive ? 'true' : 'false');
-        };
-
-        hamburger.addEventListener('click', toggleMenu);
-
-        // Cerrar al click en enlace
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', () => {
-                hamburger.classList.remove('active');
-                navMenu.classList.remove('show');
-                hamburger.setAttribute('aria-expanded', 'false');
-            });
-        });
-
-        // Cerrar menú si se redimensiona a escritorio
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 968) {
-                hamburger.classList.remove('active');
-                navMenu.classList.remove('show');
-                hamburger.setAttribute('aria-expanded', 'false');
-            }
-        });
-    }
-
-    // === Detección automática de página activa ===
-    const path = window.location.pathname.split('/').pop() || 'index.html';
-    const currentPage = path.split('?')[0];
-    document.querySelectorAll('.nav-link').forEach(link => {
-        const href = link.getAttribute('href');
-        if (href === currentPage || (currentPage === '' && href === 'index.html')) {
-            link.classList.add('active');
-        }
-    });
-
-    // === Navbar scroll inteligente ===
-    let lastScroll = 0;
-    const navbar = document.querySelector('.navbar');
-    if (navbar) {
-        window.addEventListener('scroll', () => {
-            const current = window.scrollY;
-            if (current > lastScroll && current > 80) {
-                navbar.style.transform = 'translateY(-100%)';
-            } else {
-                navbar.style.transform = 'translateY(0)';
-            }
-            lastScroll = current;
-        });
-    }
-
-    // === Parallax sutil en logo hero (solo escritorio) ===
-    const heroLogo = document.querySelector('.hero-logo');
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (heroLogo && !prefersReducedMotion && window.innerWidth > 768) {
-        window.addEventListener('mousemove', (e) => {
-            const x = (window.innerWidth / 2 - e.clientX) / 35;
-            const y = (window.innerHeight / 2 - e.clientY) / 35;
-            heroLogo.style.transform = `translate(${x}px, ${y}px)`;
-        });
-    }
-
-    // === Animaciones de entrada con Intersection Observer ===
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.2 });
-
-    document.querySelectorAll('.intro-section, .about-content, .prezi-container').forEach(el => {
-        el.style.transition = 'all 1.2s cubic-bezier(0.23, 1, 0.32, 1)';
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(60px)';
-        observer.observe(el);
-    });
-
-    // === Efecto shine en botones ===
-    document.querySelectorAll('.btn-primary').forEach(btn => {
-        btn.addEventListener('mousemove', (e) => {
-            const rect = btn.getBoundingClientRect();
-            const x = ((e.clientX - rect.left) / rect.width) * 100;
-            const y = ((e.clientY - rect.top) / rect.height) * 100;
-            btn.style.background = `radial-gradient(circle at ${x}% ${y}%, rgba(255,255,255,0.35), var(--primary))`;
-        });
-        btn.addEventListener('mouseleave', () => {
-            btn.style.background = '';
-        });
-    });
-
-    console.log('%c✅ CyberSafeLine V2 Ultra Premium cargada correctamente', 'color:#00f5ff; font-size:14px; font-weight:700');
+// ── Navbar scroll ──────────────────────────────────────────
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 60);
 });
+
+// ── Mobile nav toggle ──────────────────────────────────────
+const navToggle = document.getElementById('navToggle');
+const navLinks  = document.getElementById('navLinks');
+
+navToggle.addEventListener('click', () => {
+  navLinks.classList.toggle('open');
+  navToggle.classList.toggle('active');
+});
+
+// Close on link click
+navLinks.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => {
+    navLinks.classList.remove('open');
+    navToggle.classList.remove('active');
+  });
+});
+
+// ── Scroll Reveal ──────────────────────────────────────────
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      // Stagger children within a group
+      const siblings = entry.target.parentElement.querySelectorAll('[data-reveal]');
+      let delay = 0;
+      siblings.forEach((el, idx) => {
+        if (el === entry.target) delay = idx * 100;
+      });
+      setTimeout(() => {
+        entry.target.classList.add('visible');
+      }, delay);
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('[data-reveal]').forEach(el => {
+  revealObserver.observe(el);
+});
+
+// ── Animated counters ──────────────────────────────────────
+function animateCounter(el, target, duration = 1800) {
+  let start = 0;
+  const step = target / (duration / 16);
+  const timer = setInterval(() => {
+    start += step;
+    if (start >= target) {
+      el.textContent = target;
+      clearInterval(timer);
+    } else {
+      el.textContent = Math.floor(start);
+    }
+  }, 16);
+}
+
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const el     = entry.target;
+      const target = parseInt(el.dataset.target, 10);
+      animateCounter(el, target);
+      counterObserver.unobserve(el);
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.counter[data-target]').forEach(el => {
+  counterObserver.observe(el);
+});
+
+// ── Contact form ───────────────────────────────────────────
+function handleForm(e) {
+  e.preventDefault();
+  const success = document.getElementById('form-success');
+  success.style.display = 'block';
+  e.target.querySelectorAll('input, select, textarea').forEach(el => {
+    el.value = '';
+  });
+  setTimeout(() => { success.style.display = 'none'; }, 5000);
+}
+
+// ── Active nav link on scroll ──────────────────────────────
+const sections = document.querySelectorAll('section[id]');
+const navAnchors = document.querySelectorAll('.nav-links a[href^="#"]');
+
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      navAnchors.forEach(a => {
+        a.style.color = '';
+        if (a.getAttribute('href') === `#${id}`) {
+          a.style.color = 'var(--teal)';
+        }
+      });
+    }
+  });
+}, { threshold: 0.4 });
+
+sections.forEach(s => sectionObserver.observe(s));
+
+// ── Hex grid parallax on hero ──────────────────────────────
+const hexBg = document.querySelector('.hex-bg');
+window.addEventListener('mousemove', (e) => {
+  if (!hexBg) return;
+  const x = (e.clientX / window.innerWidth - 0.5) * 20;
+  const y = (e.clientY / window.innerHeight - 0.5) * 20;
+  hexBg.style.transform = `translate(${x}px, ${y}px)`;
+});
+
+// ── Smooth appear for service cards hover glow ─────────────
+document.querySelectorAll('.service-card, .mvv-card').forEach(card => {
+  card.addEventListener('mouseenter', function() {
+    this.style.transition = 'all 0.3s cubic-bezier(.4,0,.2,1)';
+  });
+});
+
+console.log('%cCyberSafeLine 🛡️ — Ciberseguridad para Pymes', 
+  'color:#00c8b4;font-size:14px;font-weight:bold;');
